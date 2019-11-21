@@ -2,9 +2,17 @@
 
 This is hass.io addon calculating space left in your septic tank based on `Erie Water IQSoft` device API.
 
-To make it work you need to create config json file inside `/share` directory.
+> Hass.io installation
 
-Example config:
+1. Connect through ssh
+2. Go to `/addons` directory
+3. Clone repository
+4. Open http://hassio.local/hassio/store (replace hassio.local with your HA address)
+5. Refresh list
+6. Install addon from `Local addons` list.
+7. Create config json file inside `/share` directory.
+
+Example config file:
 
 `/share/erie-septic-tank/config.json`
 
@@ -31,6 +39,8 @@ Example config:
   }
 }
 ```
+
+8. Start and enjoy!
 
 > MQTT Topics
 
