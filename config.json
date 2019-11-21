@@ -1,0 +1,19 @@
+{
+  "name": "Septic tank size MQTT sensor",
+  "version": "1.0.0",
+  "slug": "septic_tank_size_mqtt_sensor",
+  "description": "Septic tank size sensor based on ErieWater IQSoft device API",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "services",
+  "boot": "auto",
+  "map": ["share:rw"],
+  "options": {
+    "configFile": "/share/erie-septic-tank/config.json",
+    "historyFile": "/share/erie-septic-tank/history.json"
+  },
+  "schema": {
+    "configFile": "str",
+    "historyFile": "str"
+  },
+  "ports": {}
+}
