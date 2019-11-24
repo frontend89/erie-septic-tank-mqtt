@@ -78,7 +78,9 @@ const logger = new Logger('Erie septic tank');
   mqttClient.subscribe(resetTopic);
   mqttClient.subscribe(statusTopic);
 
-  mqttClient.on('message', (topic, message) => {
+  mqttClient.on('message', (topic, buffer) => {
+    const message = buffer.toString();
+
     logger.log(`received message with topic: ${topic}`, message);
     switch (topic) {
       case statusTopic:
