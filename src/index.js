@@ -82,6 +82,7 @@ const log = new Loggger('Erie septic tank');
     switch (topic) {
       case statusTopic:
         if (message.toLowerCase() === 'online') {
+          // home assistant handshake when HA becomes online 
           setTimeout(() => haHandshake(), 20000);
         }
         break;
@@ -93,6 +94,9 @@ const log = new Loggger('Erie septic tank');
 
   log(`init schedule: every ${interval} seconds`);
   scheduleFetch();
+  // initial home assistant handshake, when HA is available
+  // before addon started
+  setTimeout(() => haHandshake(), 20000);
 
   function scheduleFetch() {
     setTimeout(() => {
