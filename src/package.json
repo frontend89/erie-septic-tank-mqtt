@@ -19,6 +19,7 @@
   "homepage": "https://github.com/frontend89/erie-septic-tank-mqtt#readme",
   "dependencies": {
     "axios": "0.19.0",
+    "home-assistant-addon-helpers": "git+https://github.com/frontend89/home-assistant-addon-helpers.git",
     "mqtt": "3.0.0"
   }
 }

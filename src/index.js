@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const mqtt = require('mqtt');
 
-const { Logger } = require('./logger');
+const Logger = require('home-assistant-addon-helpers/logger');
 
 const CONFIG_FILE_PATH = process.env.CONFIG_FILE;
 const HISTORY_FILE_PATH = process.env.HISTORY_FILE;
@@ -20,7 +20,7 @@ const EC_ENDPOINTS = {
   INFO: deviceId => `/water_softeners/${deviceId}/info`
 };
 
-const log = new Loggger('Erie septic tank');
+const log = new Logger('Erie septic tank');
 
 (() => {
   let CONFIG, resetHistory;
