@@ -79,10 +79,11 @@ const logger = new Logger('Erie septic tank');
   mqttClient.subscribe(statusTopic);
 
   mqttClient.on('message', (topic, message) => {
+    logger.log(`received message with topic: ${topic}`, message);
     switch (topic) {
       case statusTopic:
-        if (message.toLowerCase() === 'online') {
-          // home assistant handshake when HA becomes online 
+        if ((message || '').toLowerCase() === 'online') {
+          // home assistant handshake when HA becomes online
           setTimeout(() => haHandshake(), 20000);
         }
         break;
