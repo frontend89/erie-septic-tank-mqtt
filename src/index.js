@@ -20,7 +20,7 @@ const EC_ENDPOINTS = {
   INFO: deviceId => `/water_softeners/${deviceId}/info`
 };
 
-const log = new Logger('Erie septic tank');
+const logger = new Logger('Erie septic tank');
 
 (() => {
   let CONFIG, resetHistory;
@@ -30,13 +30,13 @@ const log = new Logger('Erie septic tank');
   }
 
   CONFIG = require(CONFIG_FILE_PATH);
-  log('config file loaded:', CONFIG_FILE_PATH);
+  logger.log('config file loaded:', CONFIG_FILE_PATH);
 
   if (!fs.existsSync(HISTORY_FILE_PATH)) {
-    log('History file does not exist:', HISTORY_FILE_PATH);
+    logger.log('History file does not exist:', HISTORY_FILE_PATH);
   } else {
     resetHistory = require(HISTORY_FILE_PATH);
-    log('history file loaded:', HISTORY_FILE_PATH);
+    logger.log('history file loaded:', HISTORY_FILE_PATH);
   }
 
   checkConfig(CONFIG);
@@ -51,10 +51,10 @@ const log = new Logger('Erie septic tank');
   const sensorName = mqttConfig.sensorName || DEFAULT_SENSOR_NAME;
   const interval = config.interval || 60;
 
-  log(`stateTopic:`, stateTopic);
-  log(`resetTopic:`, resetTopic);
-  log(`sensorName:`, sensorName);
-  log(`statusTopic:`, statusTopic);
+  logger.log(`stateTopic:`, stateTopic);
+  logger.log(`resetTopic:`, resetTopic);
+  logger.log(`sensorName:`, sensorName);
+  logger.log(`statusTopic:`, statusTopic);
 
   // erie connect app data
   let cachedDeviceId = null;
@@ -72,7 +72,7 @@ const log = new Logger('Erie septic tank');
   });
 
   mqttClient.on('connect', () => {
-    log(`connected with mqtt broker:`, mqttConfig.server);
+    logger.log(`connected with mqtt broker:`, mqttConfig.server);
   });
 
   mqttClient.subscribe(resetTopic);
@@ -92,7 +92,7 @@ const log = new Logger('Erie septic tank');
     }
   });
 
-  log(`init schedule: every ${interval} seconds`);
+  logger.log(`init schedule: every ${interval} seconds`);
   scheduleFetch();
   // initial home assistant handshake, when HA is available
   // before addon started
@@ -111,7 +111,7 @@ const log = new Logger('Erie septic tank');
 
   function publish(data) {
     if (!mqttClient.connected) {
-      log('mqtt server disconnected.');
+      logger.log('mqtt server disconnected.');
       return;
     }
 
@@ -125,7 +125,7 @@ const log = new Logger('Erie septic tank');
 
     const message = JSON.stringify(data);
 
-    log(`Publish: ${stateTopic} with payload: `, message);
+    logger.log(`Publish: ${stateTopic} with payload: `, message);
     mqttClient.publish(stateTopic, message);
   }
 
@@ -157,24 +157,24 @@ const log = new Logger('Erie septic tank');
         timestamp,
         value: config.lastReset
       });
-      log('New reset history entry in memory.');
-      log('Attempt to history file update.');
+      logger.log('New reset history entry in memory.');
+      logger.log('Attempt to history file update.');
       fs.writeFileSync(HISTORY_FILE_PATH, JSON.stringify(history, null, 2), {
         encoding: 'utf-8'
       });
 
-      log('Config file updated. Update history in memory.');
+      logger.log('Config file updated. Update history in memory.');
       resetHistory = history;
     });
   }
 
   function haHandshake() {
     if (!mqttClient.connected) {
-      log('mqtt server disconnected.');
+      logger.log('mqtt server disconnected.');
       return;
     }
 
-    log(`hello to homeassistant discovery:`, discoveryTopic);
+    logger.log(`hello to homeassistant discovery:`, discoveryTopic);
     mqttClient.publish(
       discoveryTopic,
       JSON.stringify({
@@ -196,7 +196,7 @@ const log = new Logger('Erie septic tank');
   // * login
   function getTotalWaterUsage() {
     if (cachedDeviceId) {
-      log('ErieConnect - Using cached device id.');
+      logger.log('ErieConnect - Using cached device id.');
       return getInfo(cachedDeviceId);
     }
 
@@ -213,11 +213,11 @@ const log = new Logger('Erie septic tank');
   }
 
   function getInfo(deviceId) {
-    log('ErieConnect - Get info started.');
+    logger.log('ErieConnect - Get info started.');
 
     return request(EC_ENDPOINTS.INFO(deviceId)).then(info => {
       const total = parseInt(info.total_volume, 10);
-      log('ErieConnect - Info fetched.');
+      logger.log('ErieConnect - Info fetched.');
       return {
         updated: Date.now(),
         total,
@@ -230,12 +230,12 @@ const log = new Logger('Erie septic tank');
   }
 
   function getDevices() {
-    log('ErieConnect - Get devices start.');
+    logger.log('ErieConnect - Get devices start.');
     return request(EC_ENDPOINTS.DEVICE_LIST);
   }
 
   function login() {
-    log('ErieConnect - Login start.');
+    logger.log('ErieConnect - Login start.');
     return axios
       .post(EC_API_BASE_PATH + EC_ENDPOINTS.LOGIN, erieConnect)
       .then(res => {
@@ -244,9 +244,9 @@ const log = new Logger('Erie septic tank');
         HEADERS['Expiry'] = res.headers.expiry;
         HEADERS['Uid'] = res.headers.uid;
 
-        log('ErieConnect - User logged in.');
+        logger.log('ErieConnect - User logged in.');
       })
-      .catch(error => console.log(error));
+      .catch(error => console.logger.log(error));
   }
 
   function request(path) {
@@ -255,10 +255,10 @@ const log = new Logger('Erie septic tank');
       .then(res => res.data)
       .catch(res => {
         if (res.response.status === 401) {
-          log('No active session. Login retry.');
+          logger.log('No active session. Login retry.');
           return login().then(() => request(path));
         }
-        log('Error response. ' + JSON.stringify({ path, statusCode: res.response.status }));
+        logger.log('Error response. ' + JSON.stringify({ path, statusCode: res.response.status }));
         return {};
       });
   }
