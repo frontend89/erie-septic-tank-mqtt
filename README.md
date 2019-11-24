@@ -35,7 +35,8 @@ Example config file:
     "sensorName": null, // optional, default: erie_septic_tank
     "discovery_topic": null, // optional, default: homeassistant/sensor/erie_septic_tank/space/config
     "state_topic": null, // optional, erie_septic_tank/state
-    "reset_topic": null // optional, erie_septic_tank/reset
+    "reset_topic": null // optional, erie_septic_tank/reset,
+    "ha_status_topic": null // optional, hass/status
   }
 }
 ```

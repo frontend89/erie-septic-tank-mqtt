@@ -1,8 +1,8 @@
-const chalk = require('chalk');
-const moment = require('moment');
 const axios = require('axios');
 const fs = require('fs');
 const mqtt = require('mqtt');
+
+const { Logger } = require('./logger');
 
 const CONFIG_FILE_PATH = process.env.CONFIG_FILE;
 const HISTORY_FILE_PATH = process.env.HISTORY_FILE;
@@ -10,6 +10,7 @@ const HISTORY_FILE_PATH = process.env.HISTORY_FILE;
 const DEFAULT_DISCOVERY_TOPIC = 'homeassistant/sensor/erie_septic_tank/space/config';
 const DEFUALT_STATE_TOPIC = 'erie_septic_tank/state';
 const DEFUALT_RESET_TOPIC = 'erie_septic_tank/reset';
+const DEFAULT_HA_STATUS_TOPIC = 'hass/status';
 const DEFAULT_SENSOR_NAME = 'Erie septic tank';
 
 const EC_API_BASE_PATH = 'https://erieconnect.eriewatertreatment.com/api/erieapp/v1';
@@ -18,6 +19,8 @@ const EC_ENDPOINTS = {
   DEVICE_LIST: '/water_softeners',
   INFO: deviceId => `/water_softeners/${deviceId}/info`
 };
+
+const log = new Loggger('Erie septic tank');
 
 (() => {
   let CONFIG, resetHistory;
@@ -44,12 +47,14 @@ const EC_ENDPOINTS = {
   const discoveryTopic = mqttConfig.discoveryTopic || DEFAULT_DISCOVERY_TOPIC;
   const stateTopic = mqttConfig.stateTopic || DEFUALT_STATE_TOPIC;
   const resetTopic = mqttConfig.resetTopic || DEFUALT_RESET_TOPIC;
+  const statusTopic = mqttConfig.ha_status_topic || DEFAULT_HA_STATUS_TOPIC;
   const sensorName = mqttConfig.sensorName || DEFAULT_SENSOR_NAME;
   const interval = config.interval || 60;
 
   log(`stateTopic:`, stateTopic);
   log(`resetTopic:`, resetTopic);
   log(`sensorName:`, sensorName);
+  log(`statusTopic:`, statusTopic);
 
   // erie connect app data
   let cachedDeviceId = null;
@@ -68,13 +73,21 @@ const EC_ENDPOINTS = {
 
   mqttClient.on('connect', () => {
     log(`connected with mqtt broker:`, mqttConfig.server);
-    haHandshake();
   });
 
   mqttClient.subscribe(resetTopic);
-  mqttClient.on('message', topic => {
-    if (topic === resetTopic) {
-      reset();
+  mqttClient.subscribe(statusTopic);
+
+  mqttClient.on('message', (topic, message) => {
+    switch (topic) {
+      case statusTopic:
+        if (message.toLowerCase() === 'online') {
+          setTimeout(() => haHandshake(), 20000);
+        }
+        break;
+      case resetTopic:
+        reset();
+        break;
     }
   });
 
@@ -152,6 +165,11 @@ const EC_ENDPOINTS = {
   }
 
   function haHandshake() {
+    if (!mqttClient.connected) {
+      log('mqtt server disconnected.');
+      return;
+    }
+
     log(`hello to homeassistant discovery:`, discoveryTopic);
     mqttClient.publish(
       discoveryTopic,
@@ -265,17 +283,5 @@ const EC_ENDPOINTS = {
     if (!(CONFIG.mqtt.server && CONFIG.mqtt.username && CONFIG.mqtt.password)) {
       throw new Error(`Wrong configuration: mqtt object should contain: server, username and password.`);
     }
-  }
-
-  function log(message, vars) {
-    const dateString = moment().format('DD/MM/YYYY HH:mm:ss');
-
-    if (typeof vars === 'string') {
-      message += ' ' + chalk.blue(vars);
-    } else if (Array.isArray(vars)) {
-      message += ' ' + vars.map(p => chalk.blue(p)).join(' | ');
-    }
-
-    console.log(chalk.blue('[ERIE_SEPTIC_TANK]') + chalk.green(`[${dateString}]`) + `: ${message}`);
   }
 })();
