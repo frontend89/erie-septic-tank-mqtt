@@ -97,6 +97,16 @@ const logger = new Logger('Erie septic tank');
   });
 
   logger.log(`init schedule: every ${interval} seconds`);
+
+  // verify lastReset source
+  if (Array.isArray(resetHistory) && resetHistory.length) {
+    const lastReset = resetHistory[resetHistory.length - 1];
+    if (lastReset.value > config.lastReset) {
+      logger.log('update lastReset value in memory to: ', lastReset.value);
+      config.lastReset = lastReset.value;
+    }
+  }
+
   scheduleFetch();
   // initial home assistant handshake, when HA is available
   // before addon started
@@ -155,19 +165,24 @@ const logger = new Logger('Erie septic tank');
 
     // save new reset
     fetch().then(data => {
+      // update lastReset value in memory
       config.lastReset = data.total;
+
       history.push({
         date: moment(timestamp).format('DD/MM/YYYY HH:mm:ss'),
         timestamp,
         value: config.lastReset
       });
       logger.log('New reset history entry in memory.');
+
       logger.log('Attempt to history file update.');
       fs.writeFileSync(HISTORY_FILE_PATH, JSON.stringify(history, null, 2), {
         encoding: 'utf-8'
       });
 
-      logger.log('Config file updated. Update history in memory.');
+      logger.log('History file updated.');
+
+      // update history in memory
       resetHistory = history;
     });
   }
