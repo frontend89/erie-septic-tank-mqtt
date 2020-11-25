@@ -9,10 +9,12 @@ const CONFIG_FILE_PATH = process.env.CONFIG_FILE;
 const HISTORY_FILE_PATH = process.env.HISTORY_FILE;
 
 const DEFAULT_DISCOVERY_TOPIC = 'homeassistant/sensor/erie_septic_tank/space/config';
-const DEFUALT_STATE_TOPIC = 'erie_septic_tank/state';
-const DEFUALT_RESET_TOPIC = 'erie_septic_tank/reset';
-const DEFAULT_HA_STATUS_TOPIC = 'hass/status';
+const DEFAULT_STATE_TOPIC = 'erie_septic_tank/state';
+const DEFAULT_RESET_TOPIC = 'erie_septic_tank/reset';
+const DEFAULT_HA_STATUS_TOPIC = 'homeassistant/status';
 const DEFAULT_SENSOR_NAME = 'Erie septic tank';
+
+const HANDSHAKE_TIMEOUT = 10000;
 
 const EC_API_BASE_PATH = 'https://erieconnect.eriewatertreatment.com/api/erieapp/v1';
 const EC_ENDPOINTS = {
@@ -46,8 +48,8 @@ const logger = new Logger('Erie septic tank');
   const mqttConfig = CONFIG.mqtt;
 
   const discoveryTopic = mqttConfig.discoveryTopic || DEFAULT_DISCOVERY_TOPIC;
-  const stateTopic = mqttConfig.stateTopic || DEFUALT_STATE_TOPIC;
-  const resetTopic = mqttConfig.resetTopic || DEFUALT_RESET_TOPIC;
+  const stateTopic = mqttConfig.stateTopic || DEFAULT_STATE_TOPIC;
+  const resetTopic = mqttConfig.resetTopic || DEFAULT_RESET_TOPIC;
   const statusTopic = mqttConfig.ha_status_topic || DEFAULT_HA_STATUS_TOPIC;
   const sensorName = mqttConfig.sensorName || DEFAULT_SENSOR_NAME;
   const interval = config.interval || 60;
@@ -87,7 +89,7 @@ const logger = new Logger('Erie septic tank');
       case statusTopic:
         if ((message || '').toLowerCase() === 'online') {
           // home assistant handshake when HA becomes online
-          setTimeout(() => haHandshake(), 20000);
+          setTimeout(() => haHandshake(), HANDSHAKE_TIMEOUT);
         }
         break;
       case resetTopic:
@@ -110,7 +112,7 @@ const logger = new Logger('Erie septic tank');
   scheduleFetch();
   // initial home assistant handshake, when HA is available
   // before addon started
-  setTimeout(() => haHandshake(), 20000);
+  setTimeout(() => haHandshake(), HANDSHAKE_TIMEOUT);
 
   function scheduleFetch() {
     setTimeout(() => {
