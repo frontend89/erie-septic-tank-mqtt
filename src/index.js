@@ -16,7 +16,7 @@ const DEFAULT_SENSOR_NAME = 'Erie septic tank';
 
 const HANDSHAKE_TIMEOUT = 10000;
 
-const EC_API_BASE_PATH = 'https://erieconnect.eriewatertreatment.com/api/erieapp/v1';
+const EC_API_BASE_PATH = 'https://connectmysoftenerapi.pentair.eu/api/erieapp/v1';
 const EC_ENDPOINTS = {
   LOGIN: '/auth/sign_in',
   DEVICE_LIST: '/water_softeners',
@@ -267,7 +267,7 @@ const logger = new Logger('Erie septic tank');
 
         logger.log('ErieConnect - User logged in.');
       })
-      .catch(error => console.logger.log(error));
+      .catch(error => logger.log(error));
   }
 
   function request(path) {
