@@ -275,7 +275,7 @@ const logger = new Logger('Erie septic tank');
       .get(EC_API_BASE_PATH + path, { headers: HEADERS })
       .then(res => res.data)
       .catch(res => {
-        if (res.response.status === 401) {
+        if (res.response?.status === 401) {
           logger.log('No active session. Login retry.');
           return login().then(() => request(path));
         }
