@@ -279,7 +279,7 @@ const logger = new Logger('Erie septic tank');
           logger.log('No active session. Login retry.');
           return login().then(() => request(path));
         }
-        logger.log('Error response. ' + JSON.stringify({ path, statusCode: res.response.status }));
+        logger.log('Error response. ' + JSON.stringify({ path, statusCode: res.response?.status }));
         return {};
       });
   }
