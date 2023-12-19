@@ -15,7 +15,7 @@ echo NPM version:
 npm -v
 
 pwd
-npm install
+npm ci
 
 CMD="CONFIG_FILE=${CONFIG_FILE} HISTORY_FILE=${HISTORY_FILE} npm start"
 eval $CMD
