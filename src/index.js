@@ -11,6 +11,7 @@ const HISTORY_FILE_PATH = process.env.HISTORY_FILE;
 const DEFAULT_DISCOVERY_TOPIC = 'homeassistant/sensor/erie_septic_tank/space/config';
 const DEFAULT_STATE_TOPIC = 'erie_septic_tank/state';
 const DEFAULT_RESET_TOPIC = 'erie_septic_tank/reset';
+const DEFAULT_MANUAL_UPDATE_TOPIC = 'erie_septic_tank/update';
 const DEFAULT_HA_STATUS_TOPIC = 'homeassistant/status';
 const DEFAULT_SENSOR_NAME = 'Erie septic tank';
 
@@ -50,12 +51,14 @@ const logger = new Logger('Erie septic tank');
   const discoveryTopic = mqttConfig.discoveryTopic || DEFAULT_DISCOVERY_TOPIC;
   const stateTopic = mqttConfig.stateTopic || DEFAULT_STATE_TOPIC;
   const resetTopic = mqttConfig.resetTopic || DEFAULT_RESET_TOPIC;
+  const manualUpdateTopic = mqttConfig.manualUpdateTopic || DEFAULT_MANUAL_UPDATE_TOPIC;
   const statusTopic = mqttConfig.ha_status_topic || DEFAULT_HA_STATUS_TOPIC;
   const sensorName = mqttConfig.sensorName || DEFAULT_SENSOR_NAME;
   const interval = config.interval || 60;
 
   logger.log(`stateTopic:`, stateTopic);
   logger.log(`resetTopic:`, resetTopic);
+  logger.log(`manualUpdateTopic:`, manualUpdateTopic);
   logger.log(`sensorName:`, sensorName);
   logger.log(`statusTopic:`, statusTopic);
 
@@ -78,8 +81,7 @@ const logger = new Logger('Erie septic tank');
     logger.log(`connected with mqtt broker:`, mqttConfig.server);
   });
 
-  mqttClient.subscribe(resetTopic);
-  mqttClient.subscribe(statusTopic);
+  mqttClient.subscribe([statusTopic, resetTopic, manualUpdateTopic]);
 
   mqttClient.on('message', (topic, buffer) => {
     const message = buffer.toString();
@@ -91,6 +93,18 @@ const logger = new Logger('Erie septic tank');
           // home assistant handshake when HA becomes online
           setTimeout(() => haHandshake(), HANDSHAKE_TIMEOUT);
         }
+        break;
+      case manualUpdateTopic:
+        const total = parseInt(message);
+        const update = {
+          updated: Date.now(),
+          total,
+          tank_size: config.tankSize,
+          last_reset: config.lastReset,
+          space_left: config.tankSize - (total - config.lastReset)
+        };
+
+        publish(update);
         break;
       case resetTopic:
         reset();
@@ -104,7 +118,7 @@ const logger = new Logger('Erie septic tank');
   if (Array.isArray(resetHistory) && resetHistory.length) {
     const lastReset = resetHistory[resetHistory.length - 1];
     if (lastReset.value > config.lastReset) {
-      logger.log('update lastReset value in memory to: ', lastReset.value);
+      logger.log(`update lastReset value in memory to:`, lastReset.value.toString());
       config.lastReset = lastReset.value;
     }
   }
