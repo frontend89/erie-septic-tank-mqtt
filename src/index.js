@@ -55,6 +55,7 @@ const logger = new Logger('Erie septic tank');
   const statusTopic = mqttConfig.ha_status_topic || DEFAULT_HA_STATUS_TOPIC;
   const sensorName = mqttConfig.sensorName || DEFAULT_SENSOR_NAME;
   const interval = config.interval || 60;
+  let lastValue = 0;
 
   logger.log(`stateTopic:`, stateTopic);
   logger.log(`resetTopic:`, resetTopic);
@@ -105,6 +106,7 @@ const logger = new Logger('Erie septic tank');
         };
 
         publish(update);
+        lastValue = total;
         break;
       case resetTopic:
         reset();
@@ -136,7 +138,15 @@ const logger = new Logger('Erie septic tank');
   }
 
   function fetchAndPublish() {
-    fetch().then(data => publish(data));
+    fetch().then(data => {
+      if (data.total <= lastValue) {
+        logger.log('skipped value smaller then last value', data.total.toString())
+        return;
+      }
+      
+      publish(data);
+      lastValue = data.total;
+    });
   }
 
   function publish(data) {
